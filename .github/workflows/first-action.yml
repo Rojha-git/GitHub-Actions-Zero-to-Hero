@@ -1,5 +1,5 @@
-name: Deploy to k8s
-#comment11
+name: End to End CI/CD workflow for Java Applicaton with Maven, Sonar and k8s Intergation
+#comment1
 on:
   push:
     branches:
@@ -7,24 +7,23 @@ on:
 
 env:
   KUBECONFIG: ${{ secrets.KUBECONFIG }}
+  SONAR_TOKEN: ${{ secrets.SONAR_TKN }}
 
 jobs:
-  deploy:
-    runs-on: kubernetes
+  build:
+    runs-on: ubuntu-latest
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Create Docker Image
-      uses: docker/build-push-action@v2
+    - name: Java jdk setup
+      uses: actions/setup-java@v1
       with:
-        context: .
-        push: true
+        java-version: 12
 
-    - name: Deploy to k8s
-      uses: appleboy/kubectl-action@v1.0.0
-      with:
-        args: apply -f deployment.yaml
-        env:
-          KUBECONFIG: ${{ env.KUBECONFIG }}
- 
+    - name: maven target # change accordingly
+      run: mvn clean install
+
+    - name: Perform analysis on Sonar Qube
+      uses: sonarsource/sonarcloud-github-action@v1
